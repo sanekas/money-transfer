@@ -77,33 +77,34 @@ public class FinanceOperationsController {
     public void makeTransfer(HttpServerExchange httpServerExchange) {
         final Optional<Account> fromAccount = pathParamsPreprocessor.preprocessAccount(httpServerExchange,
                 PathParams.FROM_ACCOUNT_ID);
-        final Optional<Account> toAccount = pathParamsPreprocessor.preprocessAccount(httpServerExchange,
-                PathParams.TO_ACCOUNT_ID);
-        final Optional<Long> amount = pathParamsPreprocessor.preprocessAmount(httpServerExchange,
-                PathParams.AMOUNT);
-        fromAccount.ifPresent(
-                fromAcc -> toAccount.ifPresent(
-                        toAcc -> amount.ifPresent( moneyToTransfer -> {
-                            final boolean isTransferResultSuccessful = transfer(fromAcc, toAcc, moneyToTransfer,
-                                    3000, TimeUnit.MILLISECONDS);
-                            if (isTransferResultSuccessful) {
-                                httpServerExchange.setStatusCode(StatusCodes.OK);
-                                accountSerializer.serialize(fromAcc)
-                                        .ifPresentOrElse(serializedAccount -> {
-                                            httpServerExchange.setStatusCode(StatusCodes.OK);
-                                            httpServerExchange.getResponseSender().send(serializedAccount);
-                                        }, () -> {
-                                            httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                                            httpServerExchange.getResponseSender().send(
-                                                    "Fail to serialize requested account, more in logs");
-                                        });
-                            } else {
-                                httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
-                                httpServerExchange.getResponseSender().send("Not enough money at accountId: " +
-                                        fromAcc.getId());
-                            }
-
-                        })));
+        fromAccount.ifPresent(fromAcc -> {
+            final Optional<Account> toAccount = pathParamsPreprocessor.preprocessAccount(httpServerExchange,
+                    PathParams.TO_ACCOUNT_ID);
+            toAccount.ifPresent(toAcc -> {
+                final Optional<Long> amount = pathParamsPreprocessor.preprocessAmount(httpServerExchange,
+                        PathParams.AMOUNT);
+                amount.ifPresent(moneyToTransfer -> {
+                    final boolean isTransferResultSuccessful = transfer(fromAcc, toAcc, moneyToTransfer,
+                            3000, TimeUnit.MILLISECONDS);
+                    if (isTransferResultSuccessful) {
+                        httpServerExchange.setStatusCode(StatusCodes.OK);
+                        accountSerializer.serialize(fromAcc)
+                                .ifPresentOrElse(serializedAccount -> {
+                                    httpServerExchange.setStatusCode(StatusCodes.OK);
+                                    httpServerExchange.getResponseSender().send(serializedAccount);
+                                }, () -> {
+                                    httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                                    httpServerExchange.getResponseSender().send(
+                                            "Fail to serialize requested account, more in logs");
+                                });
+                    } else {
+                        httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
+                        httpServerExchange.getResponseSender().send("Not enough money at accountId: " +
+                                fromAcc.getId());
+                    }
+                });
+            });
+        });
     }
 
     private static boolean transfer(Account fromAcc,
