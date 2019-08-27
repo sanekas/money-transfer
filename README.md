@@ -1,4 +1,7 @@
 # money-transfer
+
+[![Build Status](https://travis-ci.org/sanekas/money-transfer.svg?branch=master)](https://travis-ci.org/sanekas/money-transfer)
+
 REST API for transaction demonstration
 
 API documentation:
