@@ -10,6 +10,8 @@ import io.undertow.Undertow;
 import io.undertow.server.RoutingHandler;
 
 public class Main {
+    public static final int PORT = 8080;
+
     public static void main(String[] args) {
         final PathParamsPreprocessor pathParamsPreprocessor =
                 new PathParamsPreprocessor(AppendableInMemoryAccountsStorage.S);
@@ -32,10 +34,11 @@ public class Main {
                 .put(FinanceOperationsController.PUT_TRANSFER, financeOperationsController::makeTransfer);
 
         final Undertow server = Undertow.builder()
-                .addHttpListener(8080, "localhost")
+                .addHttpListener(PORT, "localhost")
                 .setHandler(handler)
                 .build();
 
+        System.out.println("Application started at port: " + PORT);
         server.start();
     }
 }
