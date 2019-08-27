@@ -15,7 +15,6 @@ public class FinanceOperationsController {
     public static final String PUT_WITHDRAW_FROM_ACCOUNT = "/accounts/{accountId}/withdraw/{amount}";
     public static final String PUT_TRANSFER = "/accounts/from/{fromAccountId}/to/{toAccountId}/transfer/{amount}";
 
-
     private final PathParamsPreprocessor pathParamsPreprocessor;
     private final AccountSerializer accountSerializer;
 
