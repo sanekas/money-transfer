@@ -2,6 +2,7 @@ package edu.sanekas.moneytransfer.model;
 
 import org.apache.juneau.annotation.BeanIgnore;
 
+import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -31,10 +32,15 @@ public class Account {
         }
     }
 
-    public void debit(long amount) {
+    public boolean debit(long amount) {
         writeLock.lock();
         try {
-            this.totalMoney = totalMoney + amount;
+            if (amount <= 0) {
+                return false;
+            } else {
+                this.totalMoney = totalMoney + amount;
+                return true;
+            }
         } finally {
             writeLock.unlock();
         }
@@ -43,7 +49,7 @@ public class Account {
     public boolean withdraw(long amount) {
         writeLock.lock();
         try {
-            if (totalMoney < amount) {
+            if (totalMoney < amount || amount <= 0) {
                 return false;
             } else {
                 this.totalMoney = totalMoney - amount;
@@ -57,5 +63,18 @@ public class Account {
     @BeanIgnore
     public Lock getWriteLock() {
         return writeLock;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Account account = (Account) o;
+        return id == account.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

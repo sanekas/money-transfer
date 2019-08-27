@@ -32,17 +32,23 @@ public class FinanceOperationsController {
                 PathParams.AMOUNT);
         account.ifPresent(acc ->
                 amountForDebit.ifPresent(amount -> {
-                    acc.debit(amount);
-                    httpServerExchange.setStatusCode(StatusCodes.OK);
-                    accountSerializer.serialize(acc)
-                            .ifPresentOrElse(serializedAccount -> {
-                                httpServerExchange.setStatusCode(StatusCodes.OK);
-                                httpServerExchange.getResponseSender().send(serializedAccount);
+                    final boolean isDebitSuccessful = acc.debit(amount);
+                    if (isDebitSuccessful) {
+                        httpServerExchange.setStatusCode(StatusCodes.OK);
+                        accountSerializer.serialize(acc)
+                                .ifPresentOrElse(serializedAccount -> {
+                                    httpServerExchange.setStatusCode(StatusCodes.OK);
+                                    httpServerExchange.getResponseSender().send(serializedAccount);
                                 }, () -> {
-                                httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                                httpServerExchange.getResponseSender().send("Fail to serialize requested account," +
-                                        " more in logs");
-                            });
+                                    httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                                    httpServerExchange.getResponseSender().send("Fail to serialize requested account," +
+                                            " more in logs");
+                                });
+                    } else {
+                        httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
+                        httpServerExchange.getResponseSender().send("Debit is unsuccessful, amount <= 0");
+                    }
+
                 }));
     }
 
@@ -67,7 +73,8 @@ public class FinanceOperationsController {
                         });
             } else {
                 httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
-                httpServerExchange.getResponseSender().send("Not enough money at account with id: " + acc.getId());
+                httpServerExchange.getResponseSender().send("Not enough money at account with id or ampunt <= 0: "
+                        + acc.getId());
             }
         }));
     }
@@ -98,8 +105,8 @@ public class FinanceOperationsController {
                                 });
                     } else {
                         httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
-                        httpServerExchange.getResponseSender().send("Not enough money at accountId: " +
-                                fromAcc.getId());
+                        httpServerExchange.getResponseSender().send("Transaction is failed, fromAccId: " +
+                                        fromAcc.getId() + " toAccId: " + toAcc.getId() + " amount: " + amount);
                     }
                 });
             });
@@ -111,17 +118,20 @@ public class FinanceOperationsController {
                                  long amount,
                                  long timeout,
                                  TimeUnit timeUnit) {
+        if (fromAcc.getId() == toAcc.getId()) {
+            return false;
+        }
         final long interruptTime = System.nanoTime() + timeUnit.toNanos(timeout);
         while (true) {
-            boolean isWithdrawSuccessful = false;
+            boolean isTransactionSuccessful = false;
             boolean isTransactionProcessed = false;
             if (fromAcc.getWriteLock().tryLock()) {
                 try {
                     if (toAcc.getWriteLock().tryLock()) {
                         try {
-                            isWithdrawSuccessful = fromAcc.withdraw(amount);
-                            if (isWithdrawSuccessful) {
-                                toAcc.debit(amount);
+                            isTransactionSuccessful = fromAcc.withdraw(amount);
+                            if (isTransactionSuccessful) {
+                                isTransactionSuccessful = toAcc.debit(amount);
                             }
                             isTransactionProcessed = true;
                         } finally {
@@ -133,7 +143,7 @@ public class FinanceOperationsController {
                 }
             }
             if (isTransactionProcessed) {
-                return isWithdrawSuccessful;
+                return isTransactionSuccessful;
             } else if (System.nanoTime() > interruptTime) {
                 return false;
             }

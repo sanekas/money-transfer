@@ -47,7 +47,7 @@ public class PathParamsPreprocessor {
         return PathParamExtractor.extractPathParam(httpServerExchange, amountParamName)
                 .flatMap(amount -> {
                     try {
-                        return Optional.of(Long.parseLong(amount));
+                        return Optional.of(Long.parseUnsignedLong(amount));
                     } catch (NumberFormatException e) {
                         httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
                         httpServerExchange.getResponseSender().send("Fail to cast amount to long");
