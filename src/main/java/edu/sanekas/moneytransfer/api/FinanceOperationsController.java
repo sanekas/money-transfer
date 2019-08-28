@@ -39,11 +39,7 @@ public class FinanceOperationsController {
                                 .ifPresentOrElse(serializedAccount -> {
                                     httpServerExchange.setStatusCode(StatusCodes.OK);
                                     httpServerExchange.getResponseSender().send(serializedAccount);
-                                }, () -> {
-                                    httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                                    httpServerExchange.getResponseSender().send("Fail to serialize requested account," +
-                                            " more in logs");
-                                });
+                                }, () -> new SerializationErrorHandler(httpServerExchange).run());
                     } else {
                         httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
                         httpServerExchange.getResponseSender().send("Debit is unsuccessful");
@@ -66,11 +62,7 @@ public class FinanceOperationsController {
                         .ifPresentOrElse(serializedAccount -> {
                             httpServerExchange.setStatusCode(StatusCodes.OK);
                             httpServerExchange.getResponseSender().send(serializedAccount);
-                        }, () -> {
-                            httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                            httpServerExchange.getResponseSender().send("Fail to serialize requested account," +
-                                    " more in logs");
-                        });
+                        }, () -> new SerializationErrorHandler(httpServerExchange).run());
             } else {
                 httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
                 httpServerExchange.getResponseSender().send("Not enough money at account with id or ampunt <= 0: "
@@ -97,11 +89,7 @@ public class FinanceOperationsController {
                                 .ifPresentOrElse(serializedAccount -> {
                                     httpServerExchange.setStatusCode(StatusCodes.OK);
                                     httpServerExchange.getResponseSender().send(serializedAccount);
-                                }, () -> {
-                                    httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                                    httpServerExchange.getResponseSender().send(
-                                            "Fail to serialize requested account, more in logs");
-                                });
+                                }, () -> new SerializationErrorHandler(httpServerExchange).run());
                     } else {
                         httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
                         httpServerExchange.getResponseSender().send("Transaction is failed, fromAccId: " +
@@ -110,5 +98,19 @@ public class FinanceOperationsController {
                 });
             });
         });
+    }
+
+    private static class SerializationErrorHandler implements Runnable {
+        private final HttpServerExchange httpServerExchange;
+
+        SerializationErrorHandler(HttpServerExchange httpServerExchange) {
+            this.httpServerExchange = httpServerExchange;
+        }
+
+        @Override
+        public void run() {
+            httpServerExchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+            httpServerExchange.getResponseSender().send("Fail to serialize requested account, more in logs");
+        }
     }
 }
