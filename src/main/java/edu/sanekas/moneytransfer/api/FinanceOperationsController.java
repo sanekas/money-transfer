@@ -3,12 +3,12 @@ package edu.sanekas.moneytransfer.api;
 import edu.sanekas.moneytransfer.api.misc.PathParamsPreprocessor;
 import edu.sanekas.moneytransfer.model.Account;
 import edu.sanekas.moneytransfer.model.AccountSerializer;
+import edu.sanekas.moneytransfer.model.Transaction;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
 import jdk.jfr.Label;
 
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public class FinanceOperationsController {
     public static final String PUT_DEBIT_TO_ACCOUNT = "/accounts/{accountId}/debit/{amount}";
@@ -46,7 +46,7 @@ public class FinanceOperationsController {
                                 });
                     } else {
                         httpServerExchange.setStatusCode(StatusCodes.BAD_REQUEST);
-                        httpServerExchange.getResponseSender().send("Debit is unsuccessful, amount <= 0");
+                        httpServerExchange.getResponseSender().send("Debit is unsuccessful");
                     }
 
                 }));
@@ -90,9 +90,8 @@ public class FinanceOperationsController {
                 final Optional<Long> amount = pathParamsPreprocessor.preprocessAmount(httpServerExchange,
                         PathParams.AMOUNT);
                 amount.ifPresent(moneyToTransfer -> {
-                    final boolean isTransferResultSuccessful = transfer(fromAcc, toAcc, moneyToTransfer,
-                            3000, TimeUnit.MILLISECONDS);
-                    if (isTransferResultSuccessful) {
+                    final boolean isTransactionSuccessful = new Transaction(fromAcc, toAcc, moneyToTransfer).execute();
+                    if (isTransactionSuccessful) {
                         httpServerExchange.setStatusCode(StatusCodes.OK);
                         accountSerializer.serialize(fromAcc)
                                 .ifPresentOrElse(serializedAccount -> {
@@ -111,42 +110,5 @@ public class FinanceOperationsController {
                 });
             });
         });
-    }
-
-    private static boolean transfer(Account fromAcc,
-                                 Account toAcc,
-                                 long amount,
-                                 long timeout,
-                                 TimeUnit timeUnit) {
-        if (fromAcc.getId() == toAcc.getId()) {
-            return false;
-        }
-        final long interruptTime = System.nanoTime() + timeUnit.toNanos(timeout);
-        while (true) {
-            boolean isTransactionSuccessful = false;
-            boolean isTransactionProcessed = false;
-            if (fromAcc.getWriteLock().tryLock()) {
-                try {
-                    if (toAcc.getWriteLock().tryLock()) {
-                        try {
-                            isTransactionSuccessful = fromAcc.withdraw(amount);
-                            if (isTransactionSuccessful) {
-                                isTransactionSuccessful = toAcc.debit(amount);
-                            }
-                            isTransactionProcessed = true;
-                        } finally {
-                            toAcc.getWriteLock().unlock();
-                        }
-                    }
-                } finally {
-                    fromAcc.getWriteLock().unlock();
-                }
-            }
-            if (isTransactionProcessed) {
-                return isTransactionSuccessful;
-            } else if (System.nanoTime() > interruptTime) {
-                return false;
-            }
-        }
     }
 }
