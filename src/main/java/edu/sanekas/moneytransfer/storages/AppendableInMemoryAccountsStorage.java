@@ -11,8 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Appendable in memory storage for accounts.
  * Removement account by unique identifier is not supported.
  */
-public enum AppendableInMemoryAccountsStorage implements AccountsStorage {
-    S;
+public class AppendableInMemoryAccountsStorage implements AccountsStorage {
 
     private final List<Account> accounts = new CopyOnWriteArrayList<>();
 

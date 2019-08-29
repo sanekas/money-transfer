@@ -4,20 +4,28 @@ import edu.sanekas.moneytransfer.api.AccountsController;
 import edu.sanekas.moneytransfer.api.FinanceOperationsController;
 import edu.sanekas.moneytransfer.api.misc.PathParamsPreprocessor;
 import edu.sanekas.moneytransfer.model.JsonAccountSerializer;
+import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import edu.sanekas.moneytransfer.storages.AppendableInMemoryAccountsStorage;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.RoutingHandler;
 
 public class Main {
-    public static final int PORT = 8080;
-
     public static void main(String[] args) {
+        final int port = 8080;
+        final Undertow undertow = buildUndertow(port);
+        undertow.start();
+        System.out.println("Application started at port: " + port);
+    }
+
+    public static Undertow buildUndertow(int port) {
+        final AccountsStorage accountsStorage = new AppendableInMemoryAccountsStorage();
+
         final PathParamsPreprocessor pathParamsPreprocessor =
-                new PathParamsPreprocessor(AppendableInMemoryAccountsStorage.S);
+                new PathParamsPreprocessor(accountsStorage);
 
         final AccountsController accountsController =
-                new AccountsController(AppendableInMemoryAccountsStorage.S, JsonAccountSerializer.S,
+                new AccountsController(accountsStorage, JsonAccountSerializer.S,
                         pathParamsPreprocessor);
 
         final FinanceOperationsController financeOperationsController =
@@ -33,12 +41,9 @@ public class Main {
                         financeOperationsController::withdrawFromAccount)
                 .put(FinanceOperationsController.PUT_TRANSFER, financeOperationsController::makeTransfer);
 
-        final Undertow server = Undertow.builder()
-                .addHttpListener(PORT, "localhost")
+        return Undertow.builder()
+                .addHttpListener(port, "localhost")
                 .setHandler(handler)
                 .build();
-
-        System.out.println("Application started at port: " + PORT);
-        server.start();
     }
 }
