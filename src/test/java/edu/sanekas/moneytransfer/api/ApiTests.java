@@ -1,13 +1,7 @@
 package edu.sanekas.moneytransfer.api;
 
 import edu.sanekas.moneytransfer.Main;
-import edu.sanekas.moneytransfer.api.misc.PathParamsPreprocessor;
-import edu.sanekas.moneytransfer.model.JsonAccountSerializer;
-import edu.sanekas.moneytransfer.storages.AccountsStorage;
-import edu.sanekas.moneytransfer.storages.AppendableInMemoryAccountsStorage;
-import io.undertow.Handlers;
 import io.undertow.Undertow;
-import io.undertow.server.RoutingHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -48,7 +42,7 @@ public class ApiTests {
 
     @Test
     public void testGetAccountById() throws IOException, InterruptedException {
-        final HttpRequest createAccountRequest = HttpRequest
+        final HttpRequest getAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/0"))
                 .GET()
                 .build();
@@ -56,9 +50,9 @@ public class ApiTests {
                 "\t\"id\": 0,\n" +
                 "\t\"totalMoney\": 0\n" +
                 "}";
-        final HttpResponse<String> resp = httpClient.send(createAccountRequest, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals("Account should be created", 200, resp.statusCode());
-        Assert.assertEquals("Created account is invalid", serializedNewAccount, resp.body());
+        final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Account should exist", 200, resp.statusCode());
+        Assert.assertEquals("Got invalid account", serializedNewAccount, resp.body());
     }
 
     @After

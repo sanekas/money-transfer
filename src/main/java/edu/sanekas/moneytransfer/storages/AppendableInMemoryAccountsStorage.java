@@ -34,11 +34,6 @@ public class AppendableInMemoryAccountsStorage implements AccountsStorage {
     }
 
     @Override
-    public List<Account> getAllAccounts() {
-        return Collections.unmodifiableList(accounts);
-    }
-
-    @Override
     public boolean removeAccountById(int accountId) {
         throw new UnsupportedOperationException("Storage is just appendable");
     }

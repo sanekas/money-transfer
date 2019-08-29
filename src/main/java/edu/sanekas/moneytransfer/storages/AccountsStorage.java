@@ -2,7 +2,6 @@ package edu.sanekas.moneytransfer.storages;
 
 import edu.sanekas.moneytransfer.model.Account;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,11 +19,6 @@ public interface AccountsStorage {
      * @return new account
      */
     Account createAccount();
-
-    /**
-     * @return all available accounts
-     */
-    List<Account> getAllAccounts();
 
     /**
      * @param accountId
