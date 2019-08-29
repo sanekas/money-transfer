@@ -81,4 +81,19 @@ public class TransactionTest {
         Assert.assertEquals("Acc: 200; <- 350; -> 50", 500, fromAcc.getTotalMoney());
         Assert.assertEquals(150, toAcc.getTotalMoney());
     }
+
+    @Test
+    public void testTransactionWithEqualAccount() {
+        final Account acc = new Account(0);
+        final boolean transactionResult = new Transaction(acc, acc, 100).execute();
+        Assert.assertFalse("Transaction between 1 account is invalid", transactionResult);
+    }
+
+    @Test
+    public void testTransactionWithEqualsAccount() {
+        final Account fromAcc = new Account(0);
+        final Account toAcc = new Account(1);
+        final boolean transactionResult = new Transaction(fromAcc, toAcc, 0).execute();
+        Assert.assertFalse("Could not transsfer 0 money", transactionResult);
+    }
 }
