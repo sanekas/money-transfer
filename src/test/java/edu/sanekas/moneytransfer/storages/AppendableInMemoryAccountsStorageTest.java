@@ -12,20 +12,23 @@ import java.util.Optional;
 public class AppendableInMemoryAccountsStorageTest {
     private final AccountsStorage storage = AppendableInMemoryAccountsStorage.S;
 
+
     @Test
-    public void testEmptyStorage() {
-        Assert.assertTrue("Storage should be empty", storage.getAllAccounts().isEmpty());
-        Assert.assertTrue("Empty storage returned account",
-                storage.getAccountById(1).isEmpty());
+    public void testNonExistedAccount() {
+        final Optional<Account> acc = storage.getAccountById(100500);
+        Assert.assertTrue("Non-existed account is found", acc.isEmpty());
     }
 
     @Test
     public void testGetAccountById() {
-        final Account acc = storage.createAccount();
         final Optional<Account> foundAcc = storage.getAccountById(0);
         Assert.assertTrue("Account is not found", foundAcc.isPresent());
-        Assert.assertEquals("Accounts should be equal", foundAcc.get(), acc);
-        Assert.assertEquals("New account should not have money", 0, acc.getTotalMoney());
+    }
+
+    @Test
+    public void testCreateAccount() {
+        final Account account = storage.createAccount();
+        Assert.assertNotNull("Created object is null", account);
     }
 
 
