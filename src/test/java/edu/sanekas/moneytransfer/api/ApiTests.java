@@ -132,7 +132,7 @@ public class ApiTests {
                 .PUT(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals("Account doesn't exist", StatusCodes.BAD_REQUEST, resp.statusCode());
+        Assert.assertEquals("Withdraw negative", StatusCodes.BAD_REQUEST, resp.statusCode());
     }
 
     @Test
@@ -148,6 +148,28 @@ public class ApiTests {
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("Request is invalid", StatusCodes.OK, resp.statusCode());
         Assert.assertEquals("Account should be with 700", res, resp.body());
+    }
+
+    @Test
+    public void testWithdrawFromInexistedAccount() throws IOException, InterruptedException {
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.empty());
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/withdraw/1000"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Account doesn't exist", StatusCodes.NOT_FOUND, resp.statusCode());
+    }
+
+    @Test
+    public void testWithdrawNegative() throws IOException, InterruptedException {
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(new Account(0)));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/withdraw/-1000"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Withdraw negative", StatusCodes.BAD_REQUEST, resp.statusCode());
     }
 
     @After
