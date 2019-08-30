@@ -1,6 +1,7 @@
 # money-transfer
 
 [![Build Status](https://travis-ci.org/sanekas/money-transfer.svg?branch=master)](https://travis-ci.org/sanekas/money-transfer)
+[![Coverage Status](https://coveralls.io/repos/github/sanekas/money-transfer/badge.svg?branch=master)](https://coveralls.io/github/sanekas/money-transfer?branch=master)
 
 REST API for transaction demonstration
 
