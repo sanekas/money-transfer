@@ -63,6 +63,8 @@ public class ApiTests {
                         "\t\"totalMoney\": 0\n" +
                         "}";
         final HttpResponse<String> resp = httpClient.send(createAccountRequest, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Create body: " + resp.body());
+
         Assert.assertEquals("Account should be created", 201, resp.statusCode());
         Assert.assertEquals("Created account is invalid", serializedNewAccount, resp.body());
     }
@@ -79,6 +81,7 @@ public class ApiTests {
                 "\t\"totalMoney\": 0\n" +
                 "}";
         final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
+        System.out.println("Get body: " + resp.body());
         Assert.assertEquals("Account should exist", 200, resp.statusCode());
         Assert.assertEquals("Got invalid account", serializedNewAccount, resp.body());
     }
