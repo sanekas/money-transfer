@@ -6,6 +6,7 @@ import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.RoutingHandler;
+import io.undertow.util.StatusCodes;
 import org.apache.juneau.parser.ParseException;
 import org.junit.After;
 import org.junit.Assert;
@@ -61,7 +62,7 @@ public class ApiTests {
                 .build();
         final String res = "{\"id\":0,\"totalMoney\":0}";
         final HttpResponse<String> resp = httpClient.send(createAccountRequest, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals("Account should exist", 201, resp.statusCode());
+        Assert.assertEquals("Account should exist", StatusCodes.CREATED, resp.statusCode());
         Assert.assertEquals("Got invalid account", res, resp.body());
     }
 
@@ -74,8 +75,42 @@ public class ApiTests {
                 .build();
         final String res = "{\"id\":0,\"totalMoney\":0}";
         final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals("Account should exist", 200, resp.statusCode());
+        Assert.assertEquals("Account should exist", StatusCodes.OK, resp.statusCode());
         Assert.assertEquals("Got invalid account", res, resp.body());
+    }
+
+    @Test
+    public void testNonExistedAccount() throws IOException, InterruptedException {
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.empty());
+        final HttpRequest getAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0"))
+                .GET()
+                .build();
+        final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Account should not be found", StatusCodes.NOT_FOUND, resp.statusCode());
+    }
+
+    @Test
+    public void testGetAccountInvalidRequest() throws IOException, InterruptedException {
+        final HttpRequest getAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/abc"))
+                .GET()
+                .build();
+        final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Request is invalid", StatusCodes.BAD_REQUEST, resp.statusCode());
+    }
+
+    @Test
+    public void testDebitToAccount() throws IOException, InterruptedException {
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(new Account(0)));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/debit/1000"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final String res = "{\"id\":0,\"totalMoney\":1000}";
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Request is invalid", StatusCodes.OK, resp.statusCode());
+        Assert.assertEquals("Debited account with 1000", res, resp.body());
     }
 
     @After
