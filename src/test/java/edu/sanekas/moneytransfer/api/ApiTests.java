@@ -61,7 +61,8 @@ public class ApiTests {
                 .build();
         final String res = "{\"id\":0,\"totalMoney\":0}";
         final HttpResponse<String> resp = httpClient.send(createAccountRequest, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals(res, resp.body());
+        Assert.assertEquals("Account should exist", 201, resp.statusCode());
+        Assert.assertEquals("Got invalid account", res, resp.body());
     }
 
     @Test
