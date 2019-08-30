@@ -19,6 +19,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -78,9 +80,11 @@ public class ApiTests {
                 "\t\"id\": 0,\n" +
                 "\t\"totalMoney\": 0\n" +
                 "}";
-        final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
+        final byte[] expected = serializedNewAccount.getBytes(StandardCharsets.UTF_8);
+        final HttpResponse<byte[]> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofByteArray());
+        final ByteBuffer respBody = ByteBuffer.wrap(resp.body());
         Assert.assertEquals("Account should exist", 200, resp.statusCode());
-        Assert.assertEquals("Got invalid account", serializedNewAccount, resp.body());
+        Assert.assertArrayEquals("Got invalid account", expected, resp.body());
     }
 
     @After
