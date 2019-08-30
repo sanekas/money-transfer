@@ -172,6 +172,117 @@ public class ApiTests {
         Assert.assertEquals("Withdraw negative", StatusCodes.BAD_REQUEST, resp.statusCode());
     }
 
+    @Test
+    public void testWithdrawMoreThanAccountHas() throws IOException, InterruptedException {
+        final Account account = new Account(0);
+        account.debit(1000);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(new Account(0)));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/withdraw/2000"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Withdraw more than account has", StatusCodes.UNPROCESSABLE_ENTITY, resp.statusCode());
+    }
+
+    @Test
+    public void testValidTransaction() throws IOException, InterruptedException {
+        final Account fromAccount = new Account(0);
+        final Account toAccount = new Account(1);
+        fromAccount.debit(1000);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(fromAccount));
+        Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.of(toAccount));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/1/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final String res = "{\"id\":0,\"totalMoney\":500}";
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Request is invalid", StatusCodes.OK, resp.statusCode());
+        Assert.assertEquals("Account should be with 500", res, resp.body());
+    }
+
+    @Test
+    public void testTransactionWithUnknownToAccount() throws IOException, InterruptedException {
+        final Account fromAccount = new Account(0);
+        fromAccount.debit(1000);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(fromAccount));
+        Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.empty());
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/1/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("ToAccount should be undefined", StatusCodes.NOT_FOUND, resp.statusCode());
+    }
+
+    @Test
+    public void testTransactionWithUnknownFromAccount() throws IOException, InterruptedException {
+        final Account fromAccount = new Account(0);
+        fromAccount.debit(1000);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(fromAccount));
+        Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.empty());
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/1/to/0/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("FromAccount should be undefined", StatusCodes.NOT_FOUND, resp.statusCode());
+    }
+
+    @Test
+    public void testTransactionNotEnoughMoney() throws IOException, InterruptedException {
+        final Account fromAccount = new Account(0);
+        final Account toAccount = new Account(1);
+        fromAccount.debit(1000);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(fromAccount));
+        Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.of(toAccount));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/1/to/0/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Not enough money", StatusCodes.UNPROCESSABLE_ENTITY,
+                resp.statusCode());
+    }
+
+    @Test
+    public void testTransactionInvalidFromId() throws IOException, InterruptedException {
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/abc/to/1/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Invalid request should fail", StatusCodes.BAD_REQUEST,
+                resp.statusCode());
+    }
+
+    @Test
+    public void testTransactionInvalidToId() throws IOException, InterruptedException {
+        final Account account = new Account(0);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(account));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/abc/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Invalid request should fail", StatusCodes.BAD_REQUEST,
+                resp.statusCode());
+    }
+
+    @Test
+    public void testTransactionOneAccount() throws IOException, InterruptedException {
+        final Account fromAccount = new Account(0);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(fromAccount));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/0/transfer/500"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Transaction between one account should fail", StatusCodes.UNPROCESSABLE_ENTITY,
+                resp.statusCode());
+    }
+
     @After
     public void stopServer() {
         undertow.stop();
