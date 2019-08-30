@@ -10,15 +10,9 @@ import io.undertow.Undertow;
 import io.undertow.server.RoutingHandler;
 
 public class Main {
-    public static void main(String[] args) {
-        final int port = 8080;
-        final Undertow undertow = buildUndertow(port);
-        undertow.start();
-        System.out.println("Application started at port: " + port);
-    }
+    private final static int PORT = 8080;
 
-    // For test usage, undertow doesn't provide efficient framework for mocking :(
-    public static Undertow buildUndertow(int port) {
+    public static void main(String[] args) {
         final AccountsStorage accountsStorage = new AppendableInMemoryAccountsStorage();
 
         final AccountsController accountsController =
@@ -35,9 +29,11 @@ public class Main {
                         financeOperationsController::withdrawFromAccount)
                 .put(FinanceOperationsController.PUT_TRANSFER, financeOperationsController::makeTransfer);
 
-        return Undertow.builder()
-                .addHttpListener(port, "localhost")
+        final Undertow undertow = Undertow.builder()
+                .addHttpListener(PORT, "localhost")
                 .setHandler(handler)
                 .build();
+        undertow.start();
+        System.out.println("Application started at port: " + PORT);
     }
 }

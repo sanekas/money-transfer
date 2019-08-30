@@ -33,7 +33,7 @@ public class AccountsController {
                     .orElseThrow(() -> new IllegalArgumentException(ErrorMessages.ACCOUNT_ID_IS_UNDEFINED));
             final Account account = accountsStorage.getAccountById(accountId)
                     .orElseThrow(() -> new NoSuchElementException(
-                            String.format(ErrorMessages.ACCOUNT_WITH_SUCH_ID_NOT_FOUND, accountId)));
+                            String.format(ErrorMessages.ACCOUNT_WITH_ID_NOT_FOUND, accountId)));
             final ByteBuffer serializedAccount = accountSerializer.serialize(account);
             httpServerExchange.setStatusCode(StatusCodes.OK);
             httpServerExchange.getResponseSender().send(serializedAccount);
