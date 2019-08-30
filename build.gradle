@@ -2,6 +2,9 @@ plugins {
     id 'java'
 }
 
+apply plugin: "jacoco"
+
+
 group 'edu.sanekas'
 version '1.0'
 
@@ -29,3 +32,12 @@ test {
         exceptionFormat "full"
     }
 }
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled false
+    }
+}
+
+check.dependsOn jacocoTestReport
