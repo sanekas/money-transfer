@@ -113,6 +113,43 @@ public class ApiTests {
         Assert.assertEquals("Debited account with 1000", res, resp.body());
     }
 
+    @Test
+    public void testDebitToInexistedAccount() throws IOException, InterruptedException {
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.empty());
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/debit/1000"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Account doesn't exist", StatusCodes.NOT_FOUND, resp.statusCode());
+    }
+
+    @Test
+    public void testDebitNegative() throws IOException, InterruptedException {
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(new Account(0)));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/debit/-1000"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Account doesn't exist", StatusCodes.BAD_REQUEST, resp.statusCode());
+    }
+
+    @Test
+    public void testWithdrawFromAccount() throws IOException, InterruptedException {
+        final Account acc = new Account(0);
+        acc.debit(1000);
+        Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(acc));
+        final HttpRequest putAccountRequest = HttpRequest
+                .newBuilder(URI.create("http://localhost:8080/accounts/0/withdraw/300"))
+                .PUT(HttpRequest.BodyPublishers.noBody())
+                .build();
+        final String res = "{\"id\":0,\"totalMoney\":700}";
+        final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
+        Assert.assertEquals("Request is invalid", StatusCodes.OK, resp.statusCode());
+        Assert.assertEquals("Account should be with 700", res, resp.body());
+    }
+
     @After
     public void stopServer() {
         undertow.stop();
