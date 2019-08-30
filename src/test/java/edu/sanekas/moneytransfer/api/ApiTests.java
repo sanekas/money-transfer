@@ -6,6 +6,10 @@ import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.RoutingHandler;
+import org.apache.juneau.json.JsonParser;
+import org.apache.juneau.json.JsonSerializer;
+import org.apache.juneau.parser.ParseException;
+import org.apache.juneau.transforms.ReaderSwap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -54,19 +58,15 @@ public class ApiTests {
     }
 
     @Test
-    public void testCreateAccount() throws IOException, InterruptedException {
+    public void testCreateAccount() throws IOException, InterruptedException, ParseException {
         Mockito.when(accountsStorage.createAccount()).thenReturn(new Account(0));
         final HttpRequest createAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts"))
                 .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
-        final String serializedNewAccount = "{\n" +
-                        "\t\"id\": 0,\n" +
-                        "\t\"totalMoney\": 0\n" +
-                        "}";
+        final String res = "{\"id\":0,\"totalMoney\":0}";
         final HttpResponse<String> resp = httpClient.send(createAccountRequest, HttpResponse.BodyHandlers.ofString());
-        Assert.assertEquals("Account should be created", 201, resp.statusCode());
-        Assert.assertEquals("Created account is invalid", serializedNewAccount, resp.body());
+        Assert.assertEquals(res, resp.body());
     }
 
     @Test
@@ -76,15 +76,10 @@ public class ApiTests {
                 .newBuilder(URI.create("http://localhost:8080/accounts/0"))
                 .GET()
                 .build();
-        final String serializedNewAccount = "{\n" +
-                "\t\"id\": 0,\n" +
-                "\t\"totalMoney\": 0\n" +
-                "}";
-        final byte[] expected = serializedNewAccount.getBytes(StandardCharsets.UTF_8);
-        final HttpResponse<byte[]> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofByteArray());
-        final ByteBuffer respBody = ByteBuffer.wrap(resp.body());
+        final String res = "{\"id\":0,\"totalMoney\":0}";
+        final HttpResponse<String> resp = httpClient.send(getAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("Account should exist", 200, resp.statusCode());
-        Assert.assertArrayEquals("Got invalid account", expected, resp.body());
+        Assert.assertEquals("Got invalid account", res, resp.body());
     }
 
     @After
