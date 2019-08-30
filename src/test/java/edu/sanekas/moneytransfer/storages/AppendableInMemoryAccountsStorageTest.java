@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AppendableInMemoryAccountsStorageTest {
-    private final AccountsStorage storage = new AppendableInMemoryAccountsStorage();
+    private static final AccountsStorage storage = new AppendableInMemoryAccountsStorage();
 
     @Test
     public void testNonExistedAccount() {
