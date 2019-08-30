@@ -6,10 +6,7 @@ import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.RoutingHandler;
-import org.apache.juneau.json.JsonParser;
-import org.apache.juneau.json.JsonSerializer;
 import org.apache.juneau.parser.ParseException;
-import org.apache.juneau.transforms.ReaderSwap;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,8 +20,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)

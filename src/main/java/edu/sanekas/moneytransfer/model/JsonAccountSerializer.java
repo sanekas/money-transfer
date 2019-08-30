@@ -11,7 +11,9 @@ public enum  JsonAccountSerializer implements AccountSerializer {
 
     public ByteBuffer serialize(Account account) throws SerializeException {
         return ByteBuffer.wrap(
-                JsonSerializer.DEFAULT
+                JsonSerializer.create()
+                        .sortProperties()
+                        .build()
                         .serialize(account)
                         .getBytes(StandardCharsets.UTF_8)
         );
