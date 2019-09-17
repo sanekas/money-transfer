@@ -6,7 +6,10 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AppendableInMemoryAccountsStorageTest {
@@ -28,6 +31,22 @@ public class AppendableInMemoryAccountsStorageTest {
     public void testCreateAccount() {
         final Account account = storage.createAccount();
         Assert.assertNotNull("Created object is null", account);
+    }
+
+    @Test
+    public void testConcurrentAccountsCreation() throws InterruptedException {
+        final ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        final Runnable createAccountTask = storage::createAccount;
+        final int accountsForCreation = 16;
+        for (int i = 0; i < 16; ++i) {
+            es.execute(createAccountTask);
+        }
+        Thread.sleep(1000);
+        final long totalAccountsCreated = storage.getAllAccounts()
+                .mapToInt(Account::getId)
+                .distinct()
+                .count();
+        Assert.assertEquals(accountsForCreation, totalAccountsCreated);
     }
 
 
