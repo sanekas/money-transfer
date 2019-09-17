@@ -41,7 +41,7 @@ public class ApiTests {
             .put(FinanceOperationsController.PUT_DEBIT_TO_ACCOUNT, financeOperationsController::debitToAccount)
             .put(FinanceOperationsController.PUT_WITHDRAW_FROM_ACCOUNT,
                     financeOperationsController::withdrawFromAccount)
-            .put(FinanceOperationsController.POST_TRANSFER, financeOperationsController::makeTransfer);
+            .post(FinanceOperationsController.POST_TRANSFER, financeOperationsController::makeTransfer);
 
     private static Undertow undertow = Undertow.builder()
             .addHttpListener(8080, "localhost")
@@ -196,7 +196,7 @@ public class ApiTests {
         Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.of(toAccount));
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/1/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final String res = "{\"id\":0,\"totalMoney\":500}";
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
@@ -212,7 +212,7 @@ public class ApiTests {
         Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.empty());
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/1/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("ToAccount should be undefined", StatusCodes.NOT_FOUND, resp.statusCode());
@@ -226,7 +226,7 @@ public class ApiTests {
         Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.empty());
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/1/to/0/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("FromAccount should be undefined", StatusCodes.NOT_FOUND, resp.statusCode());
@@ -241,7 +241,7 @@ public class ApiTests {
         Mockito.when(accountsStorage.getAccountById(1)).thenReturn(Optional.of(toAccount));
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/1/to/0/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("Not enough money", StatusCodes.UNPROCESSABLE_ENTITY,
@@ -252,7 +252,7 @@ public class ApiTests {
     public void testTransactionInvalidFromId() throws IOException, InterruptedException {
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/abc/to/1/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("Invalid request should fail", StatusCodes.BAD_REQUEST,
@@ -265,7 +265,7 @@ public class ApiTests {
         Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(account));
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/abc/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("Invalid request should fail", StatusCodes.BAD_REQUEST,
@@ -278,7 +278,7 @@ public class ApiTests {
         Mockito.when(accountsStorage.getAccountById(0)).thenReturn(Optional.of(fromAccount));
         final HttpRequest putAccountRequest = HttpRequest
                 .newBuilder(URI.create("http://localhost:8080/accounts/from/0/to/0/transfer/500"))
-                .PUT(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .build();
         final HttpResponse<String> resp = httpClient.send(putAccountRequest, HttpResponse.BodyHandlers.ofString());
         Assert.assertEquals("Transaction between one account should fail", StatusCodes.UNPROCESSABLE_ENTITY,
