@@ -2,6 +2,7 @@ package edu.sanekas.moneytransfer.api;
 
 import edu.sanekas.moneytransfer.model.Account;
 import edu.sanekas.moneytransfer.model.JsonAccountSerializer;
+import edu.sanekas.moneytransfer.storages.AccountsManager;
 import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
@@ -26,12 +27,13 @@ import java.util.Optional;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ApiTests {
     private static final AccountsStorage accountsStorage = Mockito.mock(AccountsStorage.class);
+    private static final AccountsManager accountsManager = new AccountsManager(accountsStorage);
 
     private static final AccountsController accountsController =
-            new AccountsController(accountsStorage, JsonAccountSerializer.S);
+            new AccountsController(accountsManager, JsonAccountSerializer.S);
 
     private static final FinanceOperationsController financeOperationsController =
-            new FinanceOperationsController(JsonAccountSerializer.S, accountsStorage);
+            new FinanceOperationsController(JsonAccountSerializer.S, accountsManager);
 
     private static final RoutingHandler handler = Handlers.routing()
             .get(AccountsController.GET_ACCOUNT_BY_ID, accountsController::getAccountById)
@@ -39,7 +41,7 @@ public class ApiTests {
             .put(FinanceOperationsController.PUT_DEBIT_TO_ACCOUNT, financeOperationsController::debitToAccount)
             .put(FinanceOperationsController.PUT_WITHDRAW_FROM_ACCOUNT,
                     financeOperationsController::withdrawFromAccount)
-            .put(FinanceOperationsController.PUT_TRANSFER, financeOperationsController::makeTransfer);
+            .put(FinanceOperationsController.POST_TRANSFER, financeOperationsController::makeTransfer);
 
     private static Undertow undertow = Undertow.builder()
             .addHttpListener(8080, "localhost")

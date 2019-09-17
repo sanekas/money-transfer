@@ -5,6 +5,7 @@ import edu.sanekas.moneytransfer.api.misc.PathParamExtractor;
 import edu.sanekas.moneytransfer.model.Account;
 import edu.sanekas.moneytransfer.model.AccountSerializer;
 import edu.sanekas.moneytransfer.model.Transaction;
+import edu.sanekas.moneytransfer.storages.AccountsManager;
 import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
@@ -16,14 +17,14 @@ import java.util.NoSuchElementException;
 public class FinanceOperationsController {
     public static final String PUT_DEBIT_TO_ACCOUNT = "/accounts/{accountId}/debit/{amount}";
     public static final String PUT_WITHDRAW_FROM_ACCOUNT = "/accounts/{accountId}/withdraw/{amount}";
-    public static final String PUT_TRANSFER = "/accounts/from/{fromAccountId}/to/{toAccountId}/transfer/{amount}";
+    public static final String POST_TRANSFER = "/accounts/from/{fromAccountId}/to/{toAccountId}/transfer/{amount}";
 
     private final AccountSerializer accountSerializer;
-    private final AccountsStorage accountsStorage;
+    private final AccountsManager accountsManager;
 
-    public FinanceOperationsController(AccountSerializer accountSerializer, AccountsStorage accountsStorage) {
+    public FinanceOperationsController(AccountSerializer accountSerializer, AccountsManager accountsManager) {
         this.accountSerializer = accountSerializer;
-        this.accountsStorage = accountsStorage;
+        this.accountsManager = accountsManager;
     }
 
     @Label(value = PUT_DEBIT_TO_ACCOUNT)
@@ -32,7 +33,7 @@ public class FinanceOperationsController {
             final int accountId = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.ACCOUNT_ID)
                     .map(Integer::parseUnsignedInt)
                     .orElseThrow(() -> new IllegalArgumentException(ErrorMessages.ACCOUNT_ID_IS_UNDEFINED));
-            final Account account = accountsStorage.getAccountById(accountId)
+            final Account account = accountsManager.getAccountById(accountId)
                     .orElseThrow(() -> new NoSuchElementException(
                             String.format(ErrorMessages.ACCOUNT_WITH_ID_NOT_FOUND, accountId)));
             final long amount = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.AMOUNT)
@@ -66,7 +67,7 @@ public class FinanceOperationsController {
             final int accountId = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.ACCOUNT_ID)
                     .map(Integer::parseUnsignedInt)
                     .orElseThrow(() -> new IllegalArgumentException(ErrorMessages.ACCOUNT_ID_IS_UNDEFINED));
-            final Account account = accountsStorage.getAccountById(accountId)
+            final Account account = accountsManager.getAccountById(accountId)
                     .orElseThrow(() -> new NoSuchElementException(
                             String.format(ErrorMessages.ACCOUNT_WITH_ID_NOT_FOUND, accountId)));
             final long amount = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.AMOUNT)
@@ -94,19 +95,19 @@ public class FinanceOperationsController {
         }
     }
 
-    @Label(value = PUT_TRANSFER)
+    @Label(value = POST_TRANSFER)
     public void makeTransfer(HttpServerExchange httpServerExchange) {
         try {
             final int fromAccountId = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.FROM_ACCOUNT_ID)
                     .map(Integer::parseUnsignedInt)
                     .orElseThrow(() -> new IllegalArgumentException(ErrorMessages.ACCOUNT_ID_IS_UNDEFINED));
-            final Account fromAccount = accountsStorage.getAccountById(fromAccountId)
+            final Account fromAccount = accountsManager.getAccountById(fromAccountId)
                     .orElseThrow(() -> new NoSuchElementException(
                             String.format(ErrorMessages.ACCOUNT_WITH_ID_NOT_FOUND, fromAccountId)));
             final int toAccountId = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.TO_ACCOUNT_ID)
                     .map(Integer::parseUnsignedInt)
                     .orElseThrow(() -> new IllegalArgumentException(ErrorMessages.ACCOUNT_ID_IS_UNDEFINED));
-            final Account toAccount = accountsStorage.getAccountById(toAccountId)
+            final Account toAccount = accountsManager.getAccountById(toAccountId)
                     .orElseThrow(() -> new NoSuchElementException(
                             String.format(ErrorMessages.ACCOUNT_WITH_ID_NOT_FOUND, fromAccountId)));
             final long amount = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.AMOUNT)

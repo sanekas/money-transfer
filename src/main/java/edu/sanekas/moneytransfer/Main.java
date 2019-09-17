@@ -3,6 +3,7 @@ package edu.sanekas.moneytransfer;
 import edu.sanekas.moneytransfer.api.AccountsController;
 import edu.sanekas.moneytransfer.api.FinanceOperationsController;
 import edu.sanekas.moneytransfer.model.JsonAccountSerializer;
+import edu.sanekas.moneytransfer.storages.AccountsManager;
 import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import edu.sanekas.moneytransfer.storages.AppendableInMemoryAccountsStorage;
 import io.undertow.Handlers;
@@ -14,12 +15,13 @@ public class Main {
 
     public static void main(String[] args) {
         final AccountsStorage accountsStorage = new AppendableInMemoryAccountsStorage();
+        final AccountsManager accountsManager = new AccountsManager(accountsStorage);
 
         final AccountsController accountsController =
-                new AccountsController(accountsStorage, JsonAccountSerializer.S);
+                new AccountsController(accountsManager, JsonAccountSerializer.S);
 
         final FinanceOperationsController financeOperationsController =
-                new FinanceOperationsController(JsonAccountSerializer.S, accountsStorage);
+                new FinanceOperationsController(JsonAccountSerializer.S, accountsManager);
 
         final RoutingHandler handler = Handlers.routing()
                 .get(AccountsController.GET_ACCOUNT_BY_ID, accountsController::getAccountById)
@@ -27,7 +29,7 @@ public class Main {
                 .put(FinanceOperationsController.PUT_DEBIT_TO_ACCOUNT, financeOperationsController::debitToAccount)
                 .put(FinanceOperationsController.PUT_WITHDRAW_FROM_ACCOUNT,
                         financeOperationsController::withdrawFromAccount)
-                .put(FinanceOperationsController.PUT_TRANSFER, financeOperationsController::makeTransfer);
+                .post(FinanceOperationsController.POST_TRANSFER, financeOperationsController::makeTransfer);
 
         final Undertow undertow = Undertow.builder()
                 .addHttpListener(PORT, "localhost")

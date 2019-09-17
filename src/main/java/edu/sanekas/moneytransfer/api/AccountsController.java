@@ -4,6 +4,7 @@ import edu.sanekas.moneytransfer.api.misc.ErrorMessages;
 import edu.sanekas.moneytransfer.api.misc.PathParamExtractor;
 import edu.sanekas.moneytransfer.model.Account;
 import edu.sanekas.moneytransfer.model.AccountSerializer;
+import edu.sanekas.moneytransfer.storages.AccountsManager;
 import edu.sanekas.moneytransfer.storages.AccountsStorage;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.StatusCodes;
@@ -17,11 +18,11 @@ public class AccountsController {
     public static final String GET_ACCOUNT_BY_ID = "/accounts/{accountId}";
     public static final String POST_CREATE_ACCOUNT = "/accounts";
 
-    private final AccountsStorage accountsStorage;
+    private final AccountsManager accountsManager;
     private final AccountSerializer accountSerializer;
 
-    public AccountsController(AccountsStorage accountsStorage, AccountSerializer accountSerializer) {
-        this.accountsStorage = accountsStorage;
+    public AccountsController(AccountsManager accountsStorage, AccountSerializer accountSerializer) {
+        this.accountsManager = accountsStorage;
         this.accountSerializer = accountSerializer;
     }
 
@@ -31,7 +32,7 @@ public class AccountsController {
             final int accountId = PathParamExtractor.extractPathParam(httpServerExchange, PathParams.ACCOUNT_ID)
                     .map(Integer::parseUnsignedInt)
                     .orElseThrow(() -> new IllegalArgumentException(ErrorMessages.ACCOUNT_ID_IS_UNDEFINED));
-            final Account account = accountsStorage.getAccountById(accountId)
+            final Account account = accountsManager.getAccountById(accountId)
                     .orElseThrow(() -> new NoSuchElementException(
                             String.format(ErrorMessages.ACCOUNT_WITH_ID_NOT_FOUND, accountId)));
             final ByteBuffer serializedAccount = accountSerializer.serialize(account);
@@ -52,7 +53,7 @@ public class AccountsController {
     @Label(value = POST_CREATE_ACCOUNT)
     public void createAccount(HttpServerExchange httpServerExchange) {
         try {
-            final Account account = accountsStorage.createAccount();
+            final Account account = accountsManager.createAccount();
             final ByteBuffer serializedAccount = accountSerializer.serialize(account);
             httpServerExchange.setStatusCode(StatusCodes.CREATED);
             httpServerExchange.getResponseSender().send(serializedAccount);
