@@ -38,7 +38,7 @@ public class AppendableInMemoryAccountsStorageTest {
         final ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         final Runnable createAccountTask = storage::createAccount;
         final int accountsForCreation = 16;
-        for (int i = 0; i < 16; ++i) {
+        for (int i = 0; i < accountsForCreation; ++i) {
             es.execute(createAccountTask);
         }
         Thread.sleep(1000);
