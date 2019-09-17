@@ -36,10 +36,9 @@ public class AppendableInMemoryAccountsStorageTest {
     @Test
     public void testConcurrentAccountsCreation() throws InterruptedException {
         final ExecutorService es = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-        final Runnable createAccountTask = storage::createAccount;
         final int accountsForCreation = 16;
         for (int i = 0; i < accountsForCreation; ++i) {
-            es.execute(createAccountTask);
+            es.execute(storage::createAccount);
         }
         Thread.sleep(1000);
         final long totalAccountsCreated = storage.getAllAccounts()
